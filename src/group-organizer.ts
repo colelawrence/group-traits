@@ -10,7 +10,6 @@ interface Peep { p: Person, i: number, g: Trait[] }
 
 // Dictionary with entries function
 class Dictionary<K, V> extends Dict<K,V> {
-    constructor () { super() }
     /**
      * Returns an array of all key, value pairs in this dictionary.
      * @return {Array} an array containing all of the key, value pairs in this dictionary.
@@ -23,6 +22,48 @@ class Dictionary<K, V> extends Dict<K,V> {
         }
         return array;
     }
+}
+
+class Buckets<K, V> extends Dictionary<K, V[]> {
+    addDrops(key: K, values: V[]) {
+        if (!this.containsKey(key)) this.setValue(key, [])
+        this.getValue(key).push(...values)
+    }
+
+    moveDrops(key: K, values: V[]) {
+        let rmd = this.removeDrops(values)
+        this.addDrops(key, values)
+        return rmd
+    }
+
+    // returns removed entries
+    removeDrops(values: V[]): [K, V[]][] {
+        const removed: [K, V[]][] = []
+        const newEntries = this.entries().map(([k, vs]) => {
+            let n: V[] = []
+            let r: V[] = []
+            vs.forEach(v => values.indexOf(v) !== -1 ? r.push(v) : n.push(v))
+            removed.push([k, r])
+            return <[K, V[]]> [k, n]
+        })
+        this.clear()
+        newEntries.forEach(([k, vs]) => this.setValue(k, vs))
+        return removed
+    }
+
+    addDrop(key: K, value: V) {
+        this.addDrops(key, [value])
+    }
+
+    moveDrop(key: K, value: V) {
+        this.moveDrops(key, [value])
+    }
+
+    // returns entry
+    removeDrop(value: V) {
+        return this.removeDrops([value])
+    }
+
 }
 
 export
@@ -40,54 +81,83 @@ class GroupOrganizer {
 
         this.peepsByTrait = new Dictionary<Trait, Peep[]>()
         traits.forEach(t => this.peepsByTrait.setValue(t, []))
-        this.proposed = new Dictionary<Trait, Peep[]>()
+        this.proposed = new Buckets<Trait, Peep>()
+        this.stale = new Buckets<Trait, Peep>()
         traits.forEach(t => this.proposed.setValue(t, []))
 
-        this.ungrouped = []
-        this.peeps = new Dictionary<Person, Peep>()
-        people
-            .slice()
+        this.ungrouped = people.slice()
             .map((p, i) => {
                 return { p, i, g: p.getTraits() }
             })
-            .forEach((peep: Peep) => {
-                this.ungrouped.push(peep)
-                const person = peep.p
-                this.peeps.setValue(person, peep)
+            .map((peep: Peep) => {
                 // populate traits to peeps
-                person.getTraits()
+                peep.g
                     .forEach(t => {
                         let peeps = this.peepsByTrait.getValue(t)
                         this.peepsByTrait.setValue(t, [...peeps, peep])
                     })
+
+                return peep
             })
     }
 
     getResults(): GroupResult[] {
-        this.updateUngrouped()
-
-        // Start groups with people who have one preference
-        this.ungrouped
-            .filter(p => p.g.length === 1)
-            .map(p => { return { p, t: p.p.getTraits().reduce(p => p) } })
-            .forEach(({p, t}) => {
-                // Peep now has no other groups
-                p.g = []
-                this.proposed.getValue(t).push(p)
-            })
-
-        
-
-        this.updateUngrouped()
-        
-        let groupSizes = (new Array(this.groupSizeMax + 1 - this.groupSizeMin)).fill(0)
+        const groupSizes = (new Array(this.groupSizeMax + 1 - this.groupSizeMin)).fill(0)
             .map((_,i) => this.groupSizeMin + i)
+
+        // Ensure that every group has enough people
+        const MAX_TRIES = 10 // In the worst case,
+            // this will be the length of longest getTraits() list
+        let tries = 0
+        while (++tries < MAX_TRIES) {
+            // Remove everyone who does not have any more preferences
+            this.ungrouped.filter(p => p.g.length > 0)
+                .forEach(p => {
+                    // Put peep into next proposed
+                    let t = p.g.shift()
+                    this.proposed.addDrop(t, p)
+
+                    let staleBucket = this.stale.getValue(t)
+                    if (staleBucket && staleBucket.length > 0) {
+                        let rmd = this.proposed.moveDrops(t, staleBucket)
+                        this.log(rmd, "movingDrops in proposed based on stale")
+                    }
+                })
+
+            let groupsTooSmall = this.proposed
+                .entries()
+                // Use [Trait, Peep[]] pairs
+                .filter(([t, p]) => p.length < this.groupSizeMin)
+
+            if (groupsTooSmall.length === 0) {
+                break
+            } else {
+                this.log(groupsTooSmall, "groupsTooSmall")
+                this.ungrouped =
+                    groupsTooSmall
+                    .map(([t, p]) => {
+                        // Add Trait and Peeps to stale
+                        // We use these values later in order to jumpstart the next grouping
+                        this.stale.addDrops(t, p)
+                        // Remove proposed
+                        this.proposed.remove(t)
+
+                        // these peeps go back into ungrouped
+                        return p
+                    })
+                    .reduce((prev, curr) => prev.concat(curr), [])
+            }
+        }
+
+        if (tries === MAX_TRIES) {
+            console.warn(`Max tries (${MAX_TRIES}) reached while getting results!`)
+        }
 
         // Divide up proposed groups
         const results = this.proposed
             .entries()
             // Use [Trait, Peep[]] pairs
-            .filter(([t, p]) => p.length > this.groupSizeMin)
+            .filter(([t, p]) => p.length >= this.groupSizeMin)
             .map(([t, p]) => {
                 let len = p.length
 
@@ -116,18 +186,29 @@ class GroupOrganizer {
             })
             .reduce((prev, curr: GroupResult[]) => prev.concat(curr), [])
 
+        // while (ungrouped.length > 0) {
+        //     let peep = ungrouped.shift()
+        //     console.log("LOST", peep)
+        // }
+        
         return results
     }
 
     debug() {
-        console.log('debug')
-        console.log("this.ungrouped")
-        let opts: util.InspectOptions = {
+        console.log("Debugging Group Organizer")
+        this.log('debug()')
+        this.log(this.ungrouped, "this.ungrouped")
+        this.log(this.stale.entries(), "this.stale")
+        this.log(this.proposed.entries(), "this.proposed.entries()")
+        this.logMessages.forEach(strs => console.log.apply(console, strs))
+        this.logMessages = []
+    }
+
+    private logMessages: string[][] = []
+    private log (aye, title: string = "DEBUG") {
+        this.logMessages.push([title, util.inspect(aye, {
             depth: 4, showHidden: false, colors: true
-        }
-        util.debug(util.inspect(this.ungrouped, opts))
-        console.log("this.proposed.entries()")
-        util.debug(util.inspect(this.proposed.entries(), opts))
+        })])
     }
 
     private subset_sum(target: number, nums: number[], out: {ans: number[]}, partial: number[] = []) {
@@ -149,18 +230,13 @@ class GroupOrganizer {
     }
 
     // State of problem
-
-    private peeps: Dictionary<Person, Peep>
     private ungrouped: Array<Peep>
-    private proposed: Dictionary<Trait, Peep[]>
+    private stale: Buckets<Trait, Peep>
+    private proposed: Buckets<Trait, Peep>
 
-    private gupgt1(trait: Trait): Peep[] {
+    private gup(trait: Trait): Peep[] {
         const peepsWithTrait = this.peepsByTrait.getValue(trait)
-        return peepsWithTrait.filter(p => p.g.length > 1)
-    }
-
-    private updateUngrouped(){
-        this.ungrouped = this.ungrouped.filter(p => p.g.length > 0)
+        return peepsWithTrait.filter(p => p.g.length >= 1)
     }
 }
 
