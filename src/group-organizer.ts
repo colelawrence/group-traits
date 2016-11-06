@@ -64,6 +64,10 @@ class Buckets<K, V> extends Dictionary<K, V[]> {
         return this.removeDrops([value])
     }
 
+    static moveDrops<K, V>(key: K, from: Buckets<K, V>, to: Buckets<K, V>, values: V[]) {
+        let removed = from.removeDrops(values)
+        to.addDrops(key, removed.map(([k,v]) => v).reduce((p, c) => p.concat(c), []))
+    }
 }
 
 export
@@ -117,9 +121,20 @@ class GroupOrganizer {
                     let t = p.g.shift()
                     this.proposed.addDrop(t, p)
 
-                    let staleBucket = this.stale.getValue(t)
-                    if (staleBucket && staleBucket.length > 0) {
-                        let rmd = this.proposed.moveDrops(t, staleBucket)
+                    let staleBucket = this.stale.getValue(t) || []
+
+                    // Our person is already grouped, so how do we get him ungrouped?
+                    let priorityStale = staleBucket.filter((sp) => sp.i < p.i)
+                    let groupedLowlings = this.proposed.getValue(t).filter((sp) => sp.i < p.i)
+
+                    // Should we take these grouped lowlings and remove them from their current group?
+                    // Only if we can safely remove them without breaking apart the group...
+                    // removedropifdoenthurt
+
+                    // TODO: move the stale peeps that have lower rank, using filter(sp => sp.i < p.i)
+                    // compare the "staleness" ?
+                    if (priorityStale && priorityStale.length > 0) {
+                        let rmd = this.proposed.moveDrops(t, priorityStale)
                         this.log(rmd, "movingDrops in proposed based on stale")
                     }
                 })
