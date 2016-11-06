@@ -1,8 +1,11 @@
 
-Divide up group into small groups
+F and G would not have gotten their first
+choice if Q and R did not want their first
+choice later.
 
 ===========================
 groupMin: 3, groupMax: 5
+
 ===========================
 A: 1
 B: 1
@@ -20,8 +23,12 @@ M: 1
 N: 1
 O: 1
 P: 1
+Q: 4, 3
+R: 4, 3
+
 ===========================
 1: A, B, C
 1: D, E, M
-1: F, G, N, O, P
+1: N, O, P
 2: H, I, J, K, L
+3: F, G, Q, R

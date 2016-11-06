@@ -8,10 +8,12 @@ and the third block is the expected output.
 
 ===========================
 groupMin: 3, groupMax: 7
+
 ===========================
 A: 1
 B: 1
 C: 1
 D: 1
+
 ===========================
 1: A, B, C, D
