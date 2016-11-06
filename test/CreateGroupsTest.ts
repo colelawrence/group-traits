@@ -1,10 +1,12 @@
 
 import { Person, Trait, Group } from '../src/models'
-import { createGroups, GroupResult } from '../src/group'
+import { GroupOrganizer } from '../src/group-organizer'
+import { GroupResult } from '../src/group-result'
 
 import { TestWorld, TestCase, printTestCase } from './TestWorld'
 
 import { diffGroupResults } from './helpers'
+import { readdirSync } from 'fs'
 
 describe('createGroups', () => {
     var subject : TestWorld
@@ -14,22 +16,28 @@ describe('createGroups', () => {
     })
 
     describe('test-1', () => {
-        it('should organize four similar people in same group', async () => {
-            const testcase = await subject.addTestCaseFromFile('cases/4-same-single-trait.case.md')
-            
-            printTestCase(testcase)
+        
+        const casesdir = './test/cases/'
+        readdirSync(casesdir)
+            .filter(fn => /\.case\.md$/i.test(fn)) // only case markdown files
+            .forEach((casefilename) => {
+                it(`should match oracle in ${casefilename}`, async () => {
+                    const testcase = await subject.addTestCaseFromFile(casesdir + casefilename)
 
-            const peoples = subject.getPeople()
-            const traits = subject.getTraits()
+                    printTestCase(testcase)
 
-            const results = createGroups(peoples, traits, [3, 7])
+                    const peoples = subject.getPeople()
+                    const traits = subject.getTraits()
 
-            const diff: string = diffGroupResults(testcase.groups, results)
+                    const organizer = new GroupOrganizer(peoples, traits, [3, 7])
+                    const results = organizer.getResults()
 
-            if (diff != null) {
-                throw Error(diff)
-            }
-        })
+                    const diff: string = diffGroupResults(testcase.groups, results)
 
+                    if (diff != null) {
+                        throw Error(diff)
+                    }
+                })
+            })
     })
 })

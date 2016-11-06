@@ -1,5 +1,5 @@
 import { Trait, Person } from '../src/models'
-import { GroupResult } from '../src/group'
+import { GroupResult } from '../src/group-result'
 import { readFile } from 'fs'
 
 export type TestCase = { people: Person[], groups: GroupResult[] }
@@ -34,12 +34,12 @@ export class TestWorld {
             .map(name => this.traits[name])
     }
 
-    async addTestCaseFromFile(filename: string)
+    async addTestCaseFromFile(filepath: string)
     : Promise<TestCase> {
         return new Promise<TestCase>
         ((resolve, reject) => {
             const fileContents = readFile(
-                `./test/${filename}`,
+                filepath,
                 'utf8',
                 (err, data) => {
                 if (err) return reject(err)

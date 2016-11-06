@@ -1,5 +1,5 @@
-
 import { Person, Trait, Identifiable } from './models'
+
 
 const compareIdentifiable = (a: Identifiable, b: Identifiable) => a.getId().localeCompare(b.getId())
 
@@ -33,14 +33,3 @@ class GroupResult {
     }
 }
 
-export
-function createGroups(
-        people: Person[],
-        traits: Trait[],
-        [groupSizeMin, groupSizeMax]: [number, number]
-    ): GroupResult[] {
-    
-    
-
-    return  []
-}

@@ -1,6 +1,6 @@
 
 import { Person, Trait, Group } from '../src/models'
-import { createGroups, GroupResult } from '../src/group'
+import { GroupResult } from '../src/group-result'
 
 import { TestWorld, TestCase, printTestCase } from './TestWorld'
 
