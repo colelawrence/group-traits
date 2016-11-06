@@ -3,12 +3,14 @@
   "version": "0.0.0",
   "description": "Group objects by traits",
   "scripts": {
-    "test": "mocha ./test/*Test.ts --compilers js:ts-node/register "
+    "test": "mocha ./test/*Test.ts --compilers js:ts-node/register",
+    "test:watch": "nodemon -e ts,md -w src -w test -x \"npm run test --silent\""
   },
   "author": "Cole Lawrence",
   "license": "ISC",
   "devDependencies": {
     "mocha": "^3.1.2",
+    "nodemon": "^1.11.0",
     "ts-node": "^1.6.1",
     "typescript": "^2.1.0-dev.20161105"
   },
