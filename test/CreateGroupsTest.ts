@@ -36,6 +36,7 @@ describe('createGroups', () => {
                     const diff: string = diffGroupResults(testcase.groups, results)
 
                     if (diff != null) {
+                        organizer.debug()
                         throw Error(diff)
                     }
                 })

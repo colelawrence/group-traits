@@ -1,10 +1,29 @@
 
-import { Set, Stack, Queue, PriorityQueue, Dictionary } from 'typescript-collections'
+import { Set, Stack, Queue, PriorityQueue, Dictionary as Dict } from 'typescript-collections'
 
 import { Person, Trait, Identifiable, GroupFinal, Collection } from './models'
 import { GroupResult } from './group-result'
 
+import util = require('util')
+
 interface Peep { p: Person, i: number, g: Trait[] }
+
+// Dictionary with entries function
+class Dictionary<K, V> extends Dict<K,V> {
+    constructor () { super() }
+    /**
+     * Returns an array of all key, value pairs in this dictionary.
+     * @return {Array} an array containing all of the key, value pairs in this dictionary.
+     */
+    entries(): [K, V][] {
+        const array: [K, V][] = [];
+        for (const name in this.table) {
+            const pair = this.table[name];
+            array.push([pair.key, pair.value]);
+        }
+        return array;
+    }
+}
 
 export
 class GroupOrganizer {
@@ -45,13 +64,7 @@ class GroupOrganizer {
     }
 
     getResults(): GroupResult[] {
-        let p = this.newPeopleIterator()
-
-        let { value: person, done } = p.next()
-
         this.updateUngrouped()
-
-        let preferredTrait = person.getTraits().shift()
 
         // Start groups with people who have one preference
         this.ungrouped
@@ -63,6 +76,8 @@ class GroupOrganizer {
                 this.proposed.getValue(t).push(p)
             })
 
+        
+
         this.updateUngrouped()
         
         let groupSizes = (new Array(this.groupSizeMax + 1 - this.groupSizeMin)).fill(0)
@@ -70,22 +85,21 @@ class GroupOrganizer {
 
         // Divide up proposed groups
         const results = this.proposed
-            // Essentially just entries()
-            .keys().map((trait): [Trait, Peep[]] => [trait, this.proposed.getValue(trait)])
+            .entries()
             // Use [Trait, Peep[]] pairs
             .filter(([t, p]) => p.length > this.groupSizeMin)
             .map(([t, p]) => {
                 let len = p.length
 
-                let answers: number[][] = []
+                let out: {ans: number[]} = {ans:null}
                 let acceptableLoss = 0
-                while (answers.length === 0 && acceptableLoss < this.groupSizeMin) {
-                    this.subset_sum(len - acceptableLoss, groupSizes, (ans) => answers.push(ans))
+                while (out.ans == null && acceptableLoss < this.groupSizeMin) {
+                    this.subset_sum(len - acceptableLoss, groupSizes, out)
                     acceptableLoss++
                 }
 
                 // take first answer
-                let division = answers.reduceRight((prev, curr) => curr, [])
+                let division = out.ans
                 let mark = 0
                 return division
                     .map(size => {
@@ -105,13 +119,25 @@ class GroupOrganizer {
         return results
     }
 
-    private subset_sum(target: number, nums: number[], out: (ans: number[]) => any, partial: number[] = []) {
+    debug() {
+        console.log('debug')
+        console.log("this.ungrouped")
+        let opts: util.InspectOptions = {
+            depth: 4, showHidden: false, colors: true
+        }
+        util.debug(util.inspect(this.ungrouped, opts))
+        console.log("this.proposed.entries()")
+        util.debug(util.inspect(this.proposed.entries(), opts))
+    }
+
+    private subset_sum(target: number, nums: number[], out: {ans: number[]}, partial: number[] = []) {
+        if (out.ans) return
         let s = partial.reduce((l, r) => l + r, 0)
 
         let next_ns = nums.filter((n) => s + n <= target)
         
         let exact = next_ns.filter(n => s + n === target)
-        if (exact.length === 1) return out([...partial, exact[0]])
+        if (exact.length === 1) return out.ans = [...partial, exact[0]]
 
         next_ns.map(n => this.subset_sum(target, nums, out, [...partial, n]))
     }

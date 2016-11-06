@@ -13,9 +13,9 @@ class GroupResult {
     ) {}
 
     toShortString() {
-        const memberList = this.members.map(m => m.getId()).join(', ')
+        const memberList = this.members.map(m => m.getId()).join('')
         const traitId = this.trait.getId()
-        return `${traitId}: ${memberList}`
+        return `${traitId}:${memberList}`
     }
 
     isEqual(gr: GroupResult): boolean {

@@ -20,7 +20,7 @@ ${ [a, b] // for each list
 .map(gs => gs
     .map(g => `          <${g.toShortString()}>`)
     .join('\n'))
-.join(`\n        B (${b.length}):`)}
+.join(`\n        B (${b.length}):\n`)}
 `
     const asort = a.sort(compareGroupResults)
     const bsort = b.sort(compareGroupResults)
@@ -29,10 +29,9 @@ ${ [a, b] // for each list
         .filter(([ga, gb]) => !ga.isEqual(gb))
 
     if (differentGroups.length)
-    return `Different groups:
-        ${differentGroups
-            .map(([ga, gb]) =>
-                `  <${ga.toShortString()} | ${gb.toShortString()}>` )
+    return `Different groups <expected | found>:
+${differentGroups
+            .map(([ga, gb]) => `          <${ga.toShortString()} | ${gb.toShortString()}>`)
             .join('\n') }`
     
     return null
