@@ -1,0 +1,19 @@
+{
+  "name": "group-traits",
+  "version": "0.0.0",
+  "description": "Group objects by traits",
+  "scripts": {
+    "test": "mocha ./test/*Test.ts --compilers js:ts-node/register "
+  },
+  "author": "Cole Lawrence",
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "^3.1.2",
+    "ts-node": "^1.6.1",
+    "typescript": "^2.1.0-dev.20161105"
+  },
+  "dependencies": {
+    "@types/mocha": "^2.2.32",
+    "@types/node": "^6.0.46"
+  }
+}
