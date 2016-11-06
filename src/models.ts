@@ -8,18 +8,45 @@ class Identifiable {
 }
 
 export
-class Group<M extends Identifiable, D> extends Identifiable {
+class GroupFinal<M extends Identifiable, D> extends Identifiable {
     static GROUP_COUNT: {[traitName: string]: number} = {}
     static newId(t: Trait): string {
         const traitName = t.getName()
-        const currentId = (Group.GROUP_COUNT[traitName] || 0) + 1
-        Group.GROUP_COUNT[traitName] = currentId
+        const currentId = (GroupFinal.GROUP_COUNT[traitName] || 0) + 1
+        GroupFinal.GROUP_COUNT[traitName] = currentId
         return `${traitName} ${currentId}`
     }
 
     private members: [M, D][] = [] 
-    constructor(trait: Trait) { super('Group', Group.newId(trait)) }
+    constructor(trait: Trait) { super('Group', GroupFinal.newId(trait)) }
 
+    addMember(t: M, data: D): boolean {
+        if (this.isMember(t)) return false
+
+        this.members.push([t, data])
+    }
+
+    isMember(member: M): boolean {
+        return this.members.filter(([m,]) => member.isEqual(m)).length > 0
+    }
+
+    getMember(t: M): D {
+        // returns the last added member's data
+        return this.members
+            .filter(([t,]) => t.isEqual(t))
+            .map(([,d]) => d)
+            .reduce((_, last) => last)
+    }
+
+    filter(fn: (D) => boolean): M[] {
+        return this.members
+            .filter(([,d]) => fn(d))
+            .map(([m,]) => m)
+    }
+}
+export
+class Collection<M extends Identifiable, D> {
+    private members: [M, D][] = [] 
     addMember(t: M, data: D): boolean {
         if (this.isMember(t)) return false
 
