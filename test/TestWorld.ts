@@ -2,7 +2,8 @@ import { Trait, Person } from '../src/models'
 import { GroupResult } from '../src/group-result'
 import { readFile } from 'fs'
 
-export type TestCase = { people: Person[], groups: GroupResult[] }
+export interface TestOptions { groupMax: number, groupMin: number }
+export type TestCase = { people: Person[], groups: GroupResult[], options: TestOptions }
 
 /**
  * The TestWorld is used to quickly populate a world of people.
@@ -51,15 +52,20 @@ export class TestWorld {
 
     private parseTestCase(contents: string)
     : TestCase {
-        const res = { people: [], groups: [] }
+        const res = { people: [], groups: [], options: null }
         contents
             .split(/\s*\n======+\n\s*/g)
             .slice(1) // Remove descriptions
             .forEach((content, index) => {
-                if (index === 0) res.people = this.parsePeople(content)
+                if (index === 0) res.options = this.parseOptions(content)
+                else if (index === 1) res.people = this.parsePeople(content)
                 else res.groups = this.parseGroupResults(content)
             })
         return res
+    }
+    private parseOptions(contents: string)
+    : TestOptions {
+        return eval(`({${contents}})`)
     }
     private parsePeople(contents: string)
     : Person[] {

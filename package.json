@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@types/mocha": "^2.2.32",
-    "@types/node": "^6.0.46"
+    "@types/node": "^6.0.46",
+    "typescript-collections": "^1.2.3"
   }
 }

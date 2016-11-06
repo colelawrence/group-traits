@@ -93,7 +93,11 @@ class Person extends Identifiable {
             while (t.length) {
                 yield t.shift()
             }
-        })([...this.traits])
+        })(this.getTraits())
+    }
+
+    getTraits(): Trait[] {
+        return [...this.traits]
     }
 }
 

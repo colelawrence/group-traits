@@ -19,17 +19,18 @@ describe('createGroups', () => {
         
         const casesdir = './test/cases/'
         readdirSync(casesdir)
-            .filter(fn => /\.case\.md$/i.test(fn)) // only case markdown files
+            .filter(fn => /\.md$/i.test(fn)) // only case markdown files
+            .sort()
             .forEach((casefilename) => {
                 it(`should match oracle in ${casefilename}`, async () => {
                     const testcase = await subject.addTestCaseFromFile(casesdir + casefilename)
 
-                    printTestCase(testcase)
+                    // printTestCase(testcase)
 
                     const peoples = subject.getPeople()
                     const traits = subject.getTraits()
 
-                    const organizer = new GroupOrganizer(peoples, traits, [3, 7])
+                    const organizer = new GroupOrganizer(peoples, traits, [testcase.options.groupMin || 3, testcase.options.groupMax || 7])
                     const results = organizer.getResults()
 
                     const diff: string = diffGroupResults(testcase.groups, results)
