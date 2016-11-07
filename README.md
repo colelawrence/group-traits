@@ -1,7 +1,6 @@
 Group Traits
 ============
-
-![Travis-CI Master-branch Build Status](https://travis-ci.org/ZombieHippie/group-traits.svg?branch=master)
+[![Build Status](https://travis-ci.org/ZombieHippie/group-traits.svg?branch=master)](https://travis-ci.org/ZombieHippie/group-traits)
 
 This is an algorithm which divides up objects in groups based on their similar traits.
 
