@@ -54,7 +54,7 @@ export class TestWorld {
     : TestCase {
         const res = { people: [], groups: [], options: null }
         contents
-            .split(/\s*\n======+\n\s*/g)
+            .split(/\s*\r?\n======+\r?\n\s*/g)
             .slice(1) // Remove descriptions
             .forEach((content, index) => {
                 if (index === 0) res.options = this.parseOptions(content)
@@ -70,7 +70,7 @@ export class TestWorld {
     private parsePeople(contents: string)
     : Person[] {
         return contents
-            .split(/\s*\n\s*/g)
+            .split(/\s*\r?\n\s*/g)
             .filter(ln => ln.length > 0)
             .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
             .map(([,name,traits]) => {
@@ -82,7 +82,7 @@ export class TestWorld {
     private parseGroupResults(contents: string)
     : GroupResult[] {
         return contents
-            .split(/\s*\n\s*/g)
+            .split(/\s*\r?\n\s*/g)
             .filter(ln => ln.length > 0)
             .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
             .map(([,trait, people]) => {
