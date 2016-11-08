@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "description": "Group objects by traits",
   "scripts": {
-    "test": "mocha ./test/*Test.ts --compilers js:ts-node/register",
+    "test": "mocha ./test/*Test.ts --require ts-node/register",
+    "build": "tsc",
     "test:watch": "nodemon -e ts,md -w src -w test -x \"npm run test --silent\""
   },
   "author": "Cole Lawrence",
