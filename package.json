@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "Group objects by traits",
   "scripts": {
+    "build": "tsc",
     "test": "mocha ./test/*Test.ts --compilers js:ts-node/register",
     "test:watch": "nodemon -e ts,md -w src -w test -x \"npm run test --silent\""
   },

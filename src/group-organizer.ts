@@ -129,7 +129,7 @@ class GroupOrganizer {
 
                     // Should we take these grouped lowlings and remove them from their current group?
                     // Only if we can safely remove them without breaking apart the group...
-                    // removedropifdoenthurt
+                    // removedropifdoesnthurt
 
                     // TODO: move the stale peeps that have lower rank, using filter(sp => sp.i < p.i)
                     // compare the "staleness" ?
