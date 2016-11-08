@@ -6,7 +6,11 @@
         "removeComments": false,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "outDir": "out"
+        "outDir": "out",
+        "types": [
+            "node",
+            "mocha"
+        ]
     },
     "exclude": [
         "node_modules"
