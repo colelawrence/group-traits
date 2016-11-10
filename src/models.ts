@@ -17,7 +17,7 @@ class GroupFinal<M extends Identifiable, D> extends Identifiable {
         return `${traitName} ${currentId}`
     }
 
-    private members: [M, D][] = [] 
+    private members: [M, D][] = []
     constructor(trait: Trait) { super('Group', GroupFinal.newId(trait)) }
 
     addMember(t: M, data: D): boolean {
@@ -46,7 +46,7 @@ class GroupFinal<M extends Identifiable, D> extends Identifiable {
 }
 export
 class Collection<M extends Identifiable, D> {
-    private members: [M, D][] = [] 
+    private members: [M, D][] = []
     addMember(t: M, data: D): boolean {
         if (this.isMember(t)) return false
 
@@ -98,6 +98,21 @@ class Person extends Identifiable {
 
     getTraits(): Trait[] {
         return [...this.traits]
+    }
+
+    addTrait(trait: Trait) {
+        this.traits.push(trait)
+    }
+
+    rmTrait(findTrait: string) {
+        for (let i = 0; i < this.traits.length; ++i) {
+            let t: Trait = this.traits[i]
+            let newTraits: Trait[] = []
+            if (t.getName() !== findTrait) {
+                newTraits.push(t)
+            }
+            this.traits = newTraits
+        }
     }
 }
 

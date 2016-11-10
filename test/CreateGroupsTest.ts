@@ -15,7 +15,7 @@ describe('createGroups', () => {
         subject = new TestWorld()
     })
 
-    describe('Verify that the each test case', () => {
+    describe('Verify that each test case', () => {
 
         const casesdir = './test/cases/'
         readdirSync(casesdir)
@@ -55,19 +55,34 @@ describe('createGroups', () => {
                     let peoples = subject.getPeople()
                     let traits = subject.getTraits()
 
+                    let useTrait: string
+
                     for (let i = 0; i < 10; i++) {
                         if (traits[i] === null || traits[i] === undefined) {
-                            // get data on the first person
-                            let person = peoples[0]
-                            let newTraits = person.getTraits()
-                            // add the new trait
-                            newTraits.push(new Trait(`${i + 1}`))
-                            // create a new person
-                            let newPerson = new Person(person.getId(), newTraits)
-                            // overwrite the original person
-                            peoples[0] = newPerson
+                            useTrait = `${i+1}`
                             break
                         }
+                    }
+
+                    // add a trait to one of the people
+                    // currently throws an error when a person is modified
+                    let person = peoples[0]
+                    person.addTrait(new Trait(`${useTrait}`))
+                    let newPeoples: Person[] = []
+                    newPeoples.push(person)
+                    for (let i = 1; i < peoples.length; i++) {
+                        let p: Person = peoples[i]
+                        newPeoples.push(p)
+                    }
+
+                    const organizer = new GroupOrganizer(newPeoples, traits, [testcase.options.groupMin || 3, testcase.options.groupMax || 7])
+                    const results = organizer.getResults()
+
+                    const diff: string = diffGroupResults(testcase.groups, results)
+
+                    if (diff != null) {
+                        organizer.debug()
+                        throw Error(diff)
                     }
                 })
             })
