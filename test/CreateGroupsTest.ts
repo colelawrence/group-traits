@@ -15,8 +15,8 @@ describe('createGroups', () => {
         subject = new TestWorld()
     })
 
-    describe('test-1', () => {
-        
+    describe('Verify that the each test case', () => {
+
         const casesdir = './test/cases/'
         readdirSync(casesdir)
             .filter(fn => /\.md$/i.test(fn)) // only case markdown files
@@ -38,6 +38,36 @@ describe('createGroups', () => {
                     if (diff != null) {
                         organizer.debug()
                         throw Error(diff)
+                    }
+                })
+            })
+    })
+
+    describe('Adding an unused trait to a single person', () => {
+        const casesdir = './test/cases/'
+        readdirSync(casesdir)
+            .filter(fn => /\.md$/i.test(fn))
+            .sort()
+            .forEach((casefilename) => {
+                it(`should not change the output in ${casefilename}`, async () => {
+                    const testcase = await subject.addTestCaseFromFile(casesdir + casefilename)
+
+                    let peoples = subject.getPeople()
+                    let traits = subject.getTraits()
+
+                    for (let i = 0; i < 10; i++) {
+                        if (traits[i] === null || traits[i] === undefined) {
+                            // get data on the first person
+                            let person = peoples[0]
+                            let newTraits = person.getTraits()
+                            // add the new trait
+                            newTraits.push(new Trait(`${i + 1}`))
+                            // create a new person
+                            let newPerson = new Person(person.getId(), newTraits)
+                            // overwrite the original person
+                            peoples[0] = newPerson
+                            break
+                        }
                     }
                 })
             })
