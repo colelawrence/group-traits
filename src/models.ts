@@ -99,21 +99,6 @@ class Person extends Identifiable {
     getTraits(): Trait[] {
         return [...this.traits]
     }
-
-    addTrait(trait: Trait) {
-        this.traits.push(trait)
-    }
-
-    rmTrait(findTrait: string) {
-        for (let i = 0; i < this.traits.length; ++i) {
-            let t: Trait = this.traits[i]
-            let newTraits: Trait[] = []
-            if (t.getName() !== findTrait) {
-                newTraits.push(t)
-            }
-            this.traits = newTraits
-        }
-    }
 }
 
 

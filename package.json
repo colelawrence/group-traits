@@ -18,6 +18,7 @@
   "dependencies": {
     "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.46",
+    "lodash.clonedeep": "^4.5.0",
     "typescript-collections": "^1.2.3"
   }
 }
