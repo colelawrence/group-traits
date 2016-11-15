@@ -13,15 +13,23 @@ export class TestWorld {
     private traits: {[id: string]: Trait} = {}
     private people: {[name: string]: Person} = {}
 
+    private testcase: TestCase = { people: [], groups: [], traits: [], options: null }
+
     getTrait(name: string): Trait {
-        if (this.traits[name] == null)
-            this.traits[name] = new Trait(name)
+        if (this.traits[name] == null) {
+            const trait = new Trait(name)
+            this.traits[name] = trait
+            this.testcase.traits.push(trait)
+        }
         return this.traits[name]
     }
+
     getPerson(name: string, traitNames: string[] = null): Person {
         if (this.people[name] == null && traitNames != null) {
             const traits = traitNames.map(n => this.getTrait(n))
-            this.people[name] = new Person(name, traits)
+            const person = new Person(name, traits)
+            this.testcase.people.push(person)
+            this.people[name] = person
         }
         return this.people[name]
     }
@@ -36,33 +44,49 @@ export class TestWorld {
             .map(name => this.traits[name])
     }
 
-    static addTestCaseFromFile(filepath: string)
-    : TestCase {
-            const fileContents = readFileSync(filepath, 'utf8')
-            const tw = new TestWorld()
-            return tw.parseTestCase(fileContents)
+    getTestCase(): TestCase {
+        return this.testcase
     }
 
-    static writeTestCaseToFile(testCase: TestCase, filepath: string, description = "")
+    static addTestCaseFromFile(filepath: string)
+    : TestCase {
+        return this.fromFile(filepath).getTestCase()
+    }
+
+    static fromFile(filepath: string)
+    : TestWorld {
+        const fileContents = readFileSync(filepath, 'utf8')
+        let tw = this.fromString(fileContents)
+        return tw
+    }
+
+    static fromString(contents)
+    : TestWorld {
+        const tw = new TestWorld()
+        tw.parseTestCase(contents)
+        return tw
+    }
+
+    static writeTestCaseToFile(testcase: TestCase, filepath: string, description = "")
     : boolean {
-        const contents = TestWorld.testCaseToString(testCase, description)
+        const contents = TestWorld.testCaseToString(testcase, description)
         writeFileSync(filepath, contents, 'utf8')
         return true
     }
 
-    static testCaseToString(testCase: TestCase, description = ""): string {
-        const optionsString = JSON.stringify(testCase.options)
+    static testCaseToString(testcase: TestCase, description = ""): string {
+        const optionsString = JSON.stringify(testcase.options)
             .replace(/^\s*\{/, '')
             .replace(/\}\s*$/, '')
             .replace(/"([^" -]+)":/g, '$1:')
             .replace(/,\s*/g, ', ')
-        const populationString = testCase.people
+        const populationString = testcase.people
             .map(p =>
                 `${p.getId()}: ${
                     p.getTraits().map(t => t.getId()).join(', ')
                 }`)
             .join('\n')
-        const groupString = testCase.groups
+        const groupString = testcase.groups
             .map(g =>
                 `${g.trait.getId()}: ${
                     g.members.map(p => p.getId()).join(', ')
@@ -71,23 +95,23 @@ export class TestWorld {
         return [description, optionsString, populationString, groupString].join('\n\n===========\n')
     }
 
-    private parseTestCase(contents: string)
-    : TestCase {
-        const res = { people: [], groups: [], traits: [], options: null }
+	// Parse test case and populate world
+    private parseTestCase(contents: string) {
         contents
             .split(/\s*\r?\n======+\r?\n\s*/g)
             .slice(1) // Remove descriptions
             .forEach((content, index) => {
-                if (index === 0) res.options = this.parseOptions(content)
-                else if (index === 1) res.people = this.parsePeople(content)
-                else res.groups = this.parseGroupResults(content)
+                if (index === 0) this.parseOptions(content)
+                else if (index === 1) this.parsePeople(content)
+                else this.parseGroupResults(content)
             })
-        res.traits = this.getTraits()
-        return res
+        this.testcase.traits = this.getTraits()
     }
     private parseOptions(contents: string)
     : TestOptions {
-        return eval(`({${contents}})`)
+        const options = eval(`({${contents}})`)
+        this.testcase.options = options
+        return options
     }
     private parsePeople(contents: string)
     : Person[] {
@@ -103,7 +127,7 @@ export class TestWorld {
 
     private parseGroupResults(contents: string)
     : GroupResult[] {
-        return contents
+        const groupResults = contents
             .split(/\s*\r?\n\s*/g)
             .filter(ln => ln.length > 0)
             .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
@@ -116,6 +140,8 @@ export class TestWorld {
                     people.map(pn => this.getPerson(pn))
                 )
             })
+        this.testcase.groups = groupResults
+        return groupResults
     }
 }
 
