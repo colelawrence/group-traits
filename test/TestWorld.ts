@@ -1,9 +1,10 @@
 import { Trait, Person } from '../src/models'
 import { GroupResult } from '../src/group-result'
 import { readFile } from 'fs'
+import { writeFile } from 'fs'
 
 export interface TestOptions { groupMax: number, groupMin: number }
-export type TestCase = { people: Person[], groups: GroupResult[], options: TestOptions }
+export type TestCase = { people: Person[], traits: Trait[], groups: GroupResult[], options: TestOptions }
 
 /**
  * The TestWorld is used to quickly populate a world of people.
@@ -35,7 +36,7 @@ export class TestWorld {
             .map(name => this.traits[name])
     }
 
-    async addTestCaseFromFile(filepath: string)
+    static addTestCaseFromFile(filepath: string)
     : Promise<TestCase> {
         return new Promise<TestCase>
         ((resolve, reject) => {
@@ -43,16 +44,54 @@ export class TestWorld {
                 filepath,
                 'utf8',
                 (err, data) => {
-                if (err) return reject(err)
-                const res = this.parseTestCase(data)
-                resolve(res)
-            })
+	                if (err) return reject(err)
+                    const tw = new TestWorld()
+	                const res = tw.parseTestCase(data)
+	                resolve(res)
+            	})
         })
+    }
+
+    static writeTestCaseToFile(testCase: TestCase, filepath: string, description = "")
+    : Promise<boolean> {
+		return new Promise
+        ((resolve, reject) => {
+            const contents = TestWorld.testCaseToString(testCase, description)
+            const fileContents = writeFile(
+                filepath,
+                contents,
+                'utf8',
+                (err) => {
+	                if (err) return reject(err)
+	                resolve(true)
+            	})
+        })	
+    }
+
+    static testCaseToString(testCase: TestCase, description = ""): string {
+        const optionsString = JSON.stringify(testCase.options)
+            .replace(/^\s*\{/, '')
+            .replace(/\}\s*$/, '')
+            .replace(/"([^" -]+)":/g, '$1:')
+            .replace(/,\s*/g, ', ')
+        const populationString = testCase.people
+            .map(p =>
+                `${p.getId()}: ${
+                    p.getTraits().map(t => t.getId()).join(', ')
+                }`)
+            .join('\n')
+        const groupString = testCase.groups
+            .map(g =>
+                `${g.trait.getId()}: ${
+                    g.members.map(p => p.getId()).join(', ')
+                }`)
+            .join('\n')
+        return [description, optionsString, populationString, groupString].join('\n\n===========\n')
     }
 
     private parseTestCase(contents: string)
     : TestCase {
-        const res = { people: [], groups: [], options: null }
+        const res = { people: [], groups: [], traits: [], options: null }
         contents
             .split(/\s*\r?\n======+\r?\n\s*/g)
             .slice(1) // Remove descriptions
@@ -61,6 +100,7 @@ export class TestWorld {
                 else if (index === 1) res.people = this.parsePeople(content)
                 else res.groups = this.parseGroupResults(content)
             })
+        res.traits = this.getTraits()
         return res
     }
     private parseOptions(contents: string)

@@ -23,12 +23,12 @@ describe('createGroups', () => {
             .sort()
             .forEach((casefilename) => {
                 it(`should match oracle in ${casefilename}`, async () => {
-                    const testcase = await subject.addTestCaseFromFile(casesdir + casefilename)
+                    const testcase = await TestWorld.addTestCaseFromFile(casesdir + casefilename)
 
                     // printTestCase(testcase)
 
-                    const peoples = subject.getPeople()
-                    const traits = subject.getTraits()
+                    const peoples = testcase.people
+                    const traits = testcase.traits
 
                     const organizer = new GroupOrganizer(peoples, traits, [testcase.options.groupMin || 3, testcase.options.groupMax || 7])
                     const results = organizer.getResults()
@@ -50,10 +50,10 @@ describe('createGroups', () => {
             .sort()
             .forEach((casefilename) => {
                 it(`should not change the output in ${casefilename}`, async () => {
-                    const testcase = await subject.addTestCaseFromFile(casesdir + casefilename)
+                    const testcase = await TestWorld.addTestCaseFromFile(casesdir + casefilename)
 
-                    let peoples = subject.getPeople()
-                    let traits = subject.getTraits()
+                    const peoples = testcase.people
+                    const traits = testcase.traits
 
                     let useTrait: string
 
