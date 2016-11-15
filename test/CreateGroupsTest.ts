@@ -62,9 +62,7 @@ describe('createGroups', () => {
                     }
 
                     // add a trait to one of the people
-                    // currently throws an error when a person is modified
                     let person = peoples[0]
-                    person.addTrait(new Trait(`${useTrait}`))
                     let newPeoples: Person[] = []
                     newPeoples.push(person)
                     for (let i = 1; i < peoples.length; i++) {
