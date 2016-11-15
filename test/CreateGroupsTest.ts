@@ -9,28 +9,30 @@ import { diffGroupResults } from './helpers'
 import { readdirSync } from 'fs'
 
 describe('createGroups', () => {
-    var subject : TestWorld
 
-    beforeEach(() => {
-        subject = new TestWorld()
-    })
+	const defaultGroupMin = 3
+	const defaultGroupMax = 7
+    const casesdir = './test/cases/'
+
+	var cases: { testcase: TestCase, filename: string }[]
+	= readdirSync(casesdir)
+        .filter(fn => /\.md$/i.test(fn)) // only case markdown files
+        .sort()
+        .map((filename) => {
+            let testcase = TestWorld.addTestCaseFromFile(casesdir + filename)
+            return { filename, testcase }
+        })
 
     describe('Verify that each test case', () => {
-
-        const casesdir = './test/cases/'
-        readdirSync(casesdir)
-            .filter(fn => /\.md$/i.test(fn)) // only case markdown files
-            .sort()
-            .forEach((casefilename) => {
-                it(`should match oracle in ${casefilename}`, async () => {
-                    const testcase = await TestWorld.addTestCaseFromFile(casesdir + casefilename)
-
+        cases
+            .forEach(({ testcase, filename }) => {
+                it(`should match oracle in ${ filename }`, () => {
                     // printTestCase(testcase)
 
                     const peoples = testcase.people
                     const traits = testcase.traits
 
-                    const organizer = new GroupOrganizer(peoples, traits, [testcase.options.groupMin || 3, testcase.options.groupMax || 7])
+                    const organizer = new GroupOrganizer(peoples, traits, [testcase.options.groupMin || defaultGroupMin, testcase.options.groupMax || defaultGroupMax])
                     const results = organizer.getResults()
 
                     const diff: string = diffGroupResults(testcase.groups, results)
@@ -44,14 +46,9 @@ describe('createGroups', () => {
     })
 
     describe('Adding an unused trait to a single person', () => {
-        const casesdir = './test/cases/'
-        readdirSync(casesdir)
-            .filter(fn => /\.md$/i.test(fn))
-            .sort()
-            .forEach((casefilename) => {
-                it(`should not change the output in ${casefilename}`, async () => {
-                    const testcase = await TestWorld.addTestCaseFromFile(casesdir + casefilename)
-
+        cases
+            .forEach(({ testcase, filename }) => {
+                it(`should not change the output in ${filename}`, () => {
                     const peoples = testcase.people
                     const traits = testcase.traits
 
@@ -75,7 +72,7 @@ describe('createGroups', () => {
                         newPeoples.push(p)
                     }
 
-                    const organizer = new GroupOrganizer(newPeoples, traits, [testcase.options.groupMin || 3, testcase.options.groupMax || 7])
+                    const organizer = new GroupOrganizer(newPeoples, traits, [testcase.options.groupMin || defaultGroupMin, testcase.options.groupMax || defaultGroupMax])
                     const results = organizer.getResults()
 
                     const diff: string = diffGroupResults(testcase.groups, results)

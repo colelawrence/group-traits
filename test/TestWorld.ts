@@ -1,7 +1,7 @@
 import { Trait, Person } from '../src/models'
 import { GroupResult } from '../src/group-result'
-import { readFile } from 'fs'
-import { writeFile } from 'fs'
+import { readFileSync } from 'fs'
+import { writeFileSync } from 'fs'
 
 export interface TestOptions { groupMax: number, groupMin: number }
 export type TestCase = { people: Person[], traits: Trait[], groups: GroupResult[], options: TestOptions }
@@ -37,35 +37,17 @@ export class TestWorld {
     }
 
     static addTestCaseFromFile(filepath: string)
-    : Promise<TestCase> {
-        return new Promise<TestCase>
-        ((resolve, reject) => {
-            const fileContents = readFile(
-                filepath,
-                'utf8',
-                (err, data) => {
-	                if (err) return reject(err)
-                    const tw = new TestWorld()
-	                const res = tw.parseTestCase(data)
-	                resolve(res)
-            	})
-        })
+    : TestCase {
+            const fileContents = readFileSync(filepath, 'utf8')
+            const tw = new TestWorld()
+            return tw.parseTestCase(fileContents)
     }
 
     static writeTestCaseToFile(testCase: TestCase, filepath: string, description = "")
-    : Promise<boolean> {
-		return new Promise
-        ((resolve, reject) => {
-            const contents = TestWorld.testCaseToString(testCase, description)
-            const fileContents = writeFile(
-                filepath,
-                contents,
-                'utf8',
-                (err) => {
-	                if (err) return reject(err)
-	                resolve(true)
-            	})
-        })	
+    : boolean {
+        const contents = TestWorld.testCaseToString(testCase, description)
+        writeFileSync(filepath, contents, 'utf8')
+        return true
     }
 
     static testCaseToString(testCase: TestCase, description = ""): string {
