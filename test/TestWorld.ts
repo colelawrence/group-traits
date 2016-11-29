@@ -117,6 +117,7 @@ export class TestWorld {
     : Person[] {
         return contents
             .split(/\s*\r?\n\s*/g)
+            .map(ln => ln.trim())
             .filter(ln => ln.length > 0)
             .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
             .map(([,name,traits]) => {
@@ -129,6 +130,7 @@ export class TestWorld {
     : GroupResult[] {
         const groupResults = contents
             .split(/\s*\r?\n\s*/g)
+            .map(ln => ln.trim())
             .filter(ln => ln.length > 0)
             .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
             .map(([,trait, people]) => {
