@@ -84,7 +84,7 @@ class FileContents implements IFileContents {
     clone(): FileContents {
         return new FileContents({
             description: clonedeep(this.description),
-            expected: clonedeep(this.expected),
+            expected: this.expected,
             options: clonedeep(this.options),
             people: this.people.clone(),
         })

@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync } from 'fs'
 
 import * as Models from './morph-models'
 import * as Helpers from './morph-helpers'
-import { TData } from './morph-base'
+import * as Base from './morph-base'
 
 import { Set, Bag } from 'typescript-collections'
 
@@ -234,10 +234,8 @@ class MorphStorage {
      * @param {MorphStorage.File} file The file to transform
      * @param {callback} morphFunction The function used to affect the transform. It is recommended to use the <Morph.Transform> function interfaces to implement the function(s) to be used here.
      */
-    static morphTestFile(file: Models.File, traits: TData, content: Models.FileContents, count: number,
-            morphFunction: (traits: TData,
-                            content: Models.FileContents,
-                            count?: number) => Models.FileContents): Models.FileContents {
+    static morphTestFile(file: Models.File, traits: Base.TData, content: Models.FileContents, count: number,
+            morphFunction: Base.Transform<Models.FileContents>): Models.FileContents {
         let fileContents: Models.FileContents = file.parsedcontents
         let morphedContents: Models.FileContents = morphFunction.call(morphFunction, traits, content, count)
         return morphedContents
@@ -255,7 +253,6 @@ class MorphStorage {
             .replace(/,\s*/g, ', ')
 
         let populationString = file.parsedcontents.people.toTestCaseString()
-        console.log("People string", populationString, file.parsedcontents.people)
 
         return [file.parsedcontents.description, optionsString, populationString.trim(), file.parsedcontents.expected].join('\n\n======\n')
     }

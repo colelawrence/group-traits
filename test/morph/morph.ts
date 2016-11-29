@@ -63,7 +63,7 @@ let parseOptions: Base.Parse<TestOptions> =
  */
 export
 let parsePeople: Base.Parse<Models.People> =
-(contents: string): Models.People => {
+function (contents: string): Models.People {
     let res: Models.People = new Models.People()
     // split the contents, removing blank lines
     let contentSplit = contents
@@ -100,8 +100,8 @@ let parsePeople: Base.Parse<Models.People> =
  * @returns {Models.FileContents}
  */
 export
-let addTrait: Base.Transform<Models.FileContents> =
-(trait: Base.TData, content: Models.FileContents): Models.FileContents => {
+const addTrait: Base.Transform<Models.FileContents> =
+function (trait: Base.TData, content: Models.FileContents): Models.FileContents {
     if (trait.secondary != undefined && trait.secondary.length > 1) {
         // slice off all others
         trait.secondary = trait.secondary.slice(0,0)
@@ -122,20 +122,17 @@ let addTrait: Base.Transform<Models.FileContents> =
  * @returns {Models.FileContents}
  */
 export
-let addTraits: Base.Transform<Models.FileContents> =
-(traits: Base.TData, content: Models.FileContents, count: number): Models.FileContents => {
-    // check if traits specifies anything in `secondary`
-    //  if anything is specifed, this implies that the dev knows what they want to attach the `text` to
-    //  alternatively, if `startIndex` is specified, start adding `primary` at `startIndex` for the next `count` people
-    //      this will wrap around to the first person and continues if the last person is reached and `count`
-    //      has not been reached
-    //  otherwise, if nothing is specified, then select the first `count` people
+const addTraits: Base.Transform<Models.FileContents> =
+function (traits: Base.TData, content: Models.FileContents, count: number): Models.FileContents {
     let newContent: Models.FileContents = content.clone()
 
-    // guarantee that count is not larger than the total number of people
-    count = Math.min(count, newContent.people.getLength())
+    // check if traits specifies anything in `secondary`
+    if (traits.secondary != undefined) {
 
-    if (traits.secondary != undefined && traits.secondary.length >= count) {
+        // guarantee that count is not larger than the total number of people
+        count = Math.min(count, newContent.people.getLength())
+
+        //  Implied that the dev knows what they want to attach the `text` to
         for (let name of traits.secondary) {
             let isUpdated = newContent
             	.people
@@ -149,29 +146,24 @@ let addTraits: Base.Transform<Models.FileContents> =
             if (!isUpdated) throw 'Person not found'
         }
     }
-    else if (traits.startIndex != (null || undefined)) {
-        let current = 0
-        // get the index for the start
-        while (current < traits.startIndex) {
-            ++current
-        }
-        // modify a total of count people
-        for (let i = 0; i < count; ++i, ++current) {
-            if (current >= newContent.people.getLength()) {
-                // went past the end of the list- reset to 0
-                current = 0
-            }
-            newContent.people[current] =
-                Helpers.insertTraits(newContent.people[current], traits.primary)
-        }
-    }
+    //  alternatively, if `startIndex` is specified
     else {
-        let n = count
-        // modify a total of count people
+        let startIndex = 0
+        if (traits.startIndex) {
+            //  start adding `primary` at `startIndex` for the next `count` people
+            //      this will wrap around to the first person and continues if the
+            //		last person is reached and `count` has not been reached
+            startIndex = traits.startIndex
+        }
+        // guarantee that count is not larger than the total number of people
+        const endIndex = Math.min(startIndex + count, newContent.people.getLength())
+
+        let i = 0
+        // modify a total of `count` people
         newContent.people = newContent.people
-        	.mapInplace((person) => {
-                // add traits to the first n people
-                if (0 < n--) {
+            .mapInplace((person) => {
+                // add traits to the people between our indices
+                if (startIndex <= i && endIndex > i) {
                     return Helpers.insertTraits(person, traits.primary)
                 }
             })
