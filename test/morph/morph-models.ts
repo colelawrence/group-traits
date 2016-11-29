@@ -19,20 +19,11 @@ class Person {
      * @property {string[]} Array of the person's identified traits.
      */
     public traits: string[]
-
-    /**
-     * @method Returns a formatted string representation of the person.
-     * Format is identical to how individuals are stored in the files.
-     */
-    public toString(): string {
-        return `${this.name}: ${this.traits.join(', ')}`
-    }
 }
 
 /**
  * @interface A custom array-like interface to store a list of <<Person>> objects.
  */
-export
 interface Persons {
     [name: string]: Person
 }
@@ -46,19 +37,7 @@ class People {
      * @property {Persons} Implementation of <<Persons>> for actual storage.
      */
     people: Persons
-    length: number
-
-    /**
-     * @method Returns a string-formatted representation of the population.
-     * Format is identical to the population in test case files.
-     */
-    toString(): string {
-        let res: string = ''
-        for (let person in this.people) {
-            res += `${this.people[person].toString()}\n`
-        }
-        return res // should remove the last newline
-    }
+    private length: number
 
     getLength(): number {
         this.length = Object.keys(this.people).length

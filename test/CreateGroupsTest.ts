@@ -87,12 +87,14 @@ describe('createGroups', () => {
 
                     let morphedfile = Morphs.MorphStorage.fileToString(file)
 
-                    console.log(morphedfile)
+                    // console.log(morphedfile)
                     let morphed_test: TestWorld =
                             TestWorld.fromString(morphedfile)
 
-                    const peoples = testcase.people
-                    const traits = testcase.traits
+                    let morphed_testcase: TestCase = morphed_test.getTestCase()
+
+                    const peoples = morphed_testcase.people
+                    const traits = morphed_testcase.traits
 
                     const organizer = new GroupOrganizer(peoples, traits, [testcase.options.groupMin || defaultGroupMin, testcase.options.groupMax || defaultGroupMax])
                     const results = organizer.getResults()

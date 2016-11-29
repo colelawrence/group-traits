@@ -160,7 +160,7 @@ let addTraits: Morphs.Transform<Models.FileContents> =
         }
         // modify a total of count people
         for (let i = 0; i < count; ++i, ++current) {
-            if (current >= newContent.people.length) {
+            if (current >= newContent.people.getLength()) {
                 // went past the end of the list- reset to 0
                 current = 0
             }

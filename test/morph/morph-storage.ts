@@ -27,7 +27,7 @@ class MorphStorage {
         return file
     }
 
-    static contains(filename): boolean {
+    static contains(filename: string): boolean {
         let length = this.getCount(this.testfiles)
         for (let file in this.testfiles) {
             if (this.testfiles[file].filename === file) return true
@@ -35,8 +35,9 @@ class MorphStorage {
         return false
     }
 
-    static containsMorph(): boolean {
-
+    static containsMorph(filename: string): boolean {
+        // determine the foldername from the original filename
+        const foldername: string = filename.replace('.md', '')
         return false
     }
 
@@ -47,7 +48,9 @@ class MorphStorage {
     }
 
     static storeMorph(file: Models.File) {
-
+        if (!this.containsMorph(file.filename)) {
+            // this.folders[]
+        }
     }
 
     /**
@@ -250,7 +253,11 @@ class MorphStorage {
             .replace(/\}\s*$/, '')
             .replace(/"([^" -]+)":/g, '$1:')
             .replace(/,\s*/g, ', ')
-        let populationString: string = file.parsedcontents.people.toString()
-        return [file.parsedcontents.description, optionsString, populationString, file.parsedcontents.expected].join('\n\n======\n')
+        let populationString: string = ''
+        for (let person in file.parsedcontents.people) {
+            let p = file.parsedcontents.people[person]
+            populationString += `${p.name}: ${p.traits.join(', ')}\n`
+        }
+        return [file.parsedcontents.description, optionsString, populationString.trim(), file.parsedcontents.expected].join('\n\n======\n')
     }
 }
