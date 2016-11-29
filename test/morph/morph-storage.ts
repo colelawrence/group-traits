@@ -1,7 +1,11 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync } from 'fs'
 
 import * as Models from './morph-models'
+import * as Helpers from './morph-helpers'
 import { TData } from './morph-base'
+
+import { Set, Bag } from 'typescript-collections'
+
 export
 class MorphStorage {
     private static casesdir: string
@@ -109,7 +113,9 @@ class MorphStorage {
      * @returns {number} The array's length.
      */
     static getCount(arr: any): number {
-        return Object.keys(arr).length;
+        if (typeof arr !== "object" && arr != null)
+            return Object.keys(arr).length;
+        else return 0
     }
 
     /**
@@ -201,30 +207,22 @@ class MorphStorage {
      * @returns {Morphs.TraitCount} object containing the found traits and their respective counts.
      */
     static getUsedTraits(file: Models.File): Models.TraitCount {
-        let people = file.parsedcontents.people
-        let traits: string[] = []
-        let usedTraits: string[] = []
-        let traitCount: Models.TraitCount = {}
-        for (let person in people) {
-            let personTraits = people[person].traits
-            let ptlength = this.getCount(personTraits)
-            for (let trait in personTraits) {
-                traits.push(personTraits[trait])
-            }
-        }
-        // add the unique traits used in this test case
-        usedTraits = traits.filter(
-            (name: string, index: number, self) => {
-                return index == self.indexOf(name)
-            }
-        ).sort()
-        // get the trait counts
-        for (let trait in usedTraits) {
-            traitCount[usedTraits[trait]] = 0
-        }
-        for (let trait in traits) {
-            traitCount[traits[trait]] += 1
-        }
+        const people = file.parsedcontents.people
+        const totalTraits: Bag<string> = new Bag<string>()
+        const traitCount: Models.TraitCount = {}
+
+		// Add traits to usedTraits Set
+		people.values()
+        	.map(person => person.traits)
+            // Flatten the array of arrays of traits
+            .reduce(Helpers.concat<string>(), [])
+            // Add each trait to the totalTraits bag
+            .forEach(trait => totalTraits.add(trait))
+
+		// Count up each
+        totalTraits.toSet().toArray().forEach(trait => {
+            traitCount[trait] = totalTraits.count(trait)
+        })
 
         file.usedtraits = traitCount
 
@@ -248,16 +246,17 @@ class MorphStorage {
     static fileToString(file: Models.File): string {
         // convert the parsedcontents to rawcontents
         // TODO: Population string is not showing up!
+        
+        // convert option object to testcase-like options
         const optionsString = JSON.stringify(file.parsedcontents.options)
             .replace(/^\s*\{/, '')
             .replace(/\}\s*$/, '')
             .replace(/"([^" -]+)":/g, '$1:')
             .replace(/,\s*/g, ', ')
-        let populationString: string = ''
-        for (let person in file.parsedcontents.people) {
-            let p = file.parsedcontents.people[person]
-            populationString += `${p.name}: ${p.traits.join(', ')}\n`
-        }
+
+        let populationString = file.parsedcontents.people.toTestCaseString()
+        console.log("People string", populationString, file.parsedcontents.people)
+
         return [file.parsedcontents.description, optionsString, populationString.trim(), file.parsedcontents.expected].join('\n\n======\n')
     }
 }

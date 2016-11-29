@@ -1,4 +1,4 @@
-let clonedeep = require('lodash.clonedeep')
+const clonedeep = require('lodash.clonedeep')
 
 import { readFileSync } from 'fs'
 
@@ -6,13 +6,10 @@ import { TestCase, TestWorld, TestOptions } from '../TestWorld'
 import { Identifiable, Trait, Person } from '../../src/models'
 
 import { MorphStorage } from './morph-storage'
-import * as Morphs from './morph-base'
+import * as Base from './morph-base'
 import * as Models from './morph-models'
 
-type MorphPerson = {
-    name: string
-    traits: string[]
-}
+import * as Helpers from './morph-helpers'
 
 // Declarations & definitions for function interfaces
 // Parsing
@@ -22,7 +19,7 @@ type MorphPerson = {
  * @param {string} filepath Path to file that will be read in. Must be a markdown (`.md`) file
  */
 export
-let parseFile: Morphs.Parse<Models.File> =
+let parseFile: Base.Parse<Models.File> =
 (filepath: string): Models.File => {
     // read the file in as the raw contents
     let currentFile: Models.File = {
@@ -33,12 +30,13 @@ let parseFile: Morphs.Parse<Models.File> =
     let parsedContents: string[] =
         currentFile.rawcontents.split(/\s*\r?\n======+\r?\n\s*/g)
     // run the contents through additional parsers
-    let contents: Models.FileContents = {
+    let contents: Models.FileContents = new Models.FileContents({
         description: parsedContents[0],
         options: parseOptions(parsedContents[1]),
         people: parsePeople(parsedContents[2]),
         expected: parsedContents[3]
-    }
+    })
+
     // set the file's parsed contents
     currentFile.parsedcontents = contents
     // get the file's used traits
@@ -52,7 +50,7 @@ let parseFile: Morphs.Parse<Models.File> =
  * @returns A JSON object of the test case options
  */
 export
-let parseOptions: Morphs.Parse<TestOptions> =
+let parseOptions: Base.Parse<TestOptions> =
 (options: string): TestOptions => {
     const testoptions: TestOptions = eval(`({${options}})`)
     return testoptions
@@ -64,7 +62,7 @@ let parseOptions: Morphs.Parse<TestOptions> =
  * @returns An array of objects, each of which contains a name and the list of traits associated with that name
  */
 export
-let parsePeople: Morphs.Parse<Models.People> =
+let parsePeople: Base.Parse<Models.People> =
 (contents: string): Models.People => {
     let res: Models.People = new Models.People()
     // split the contents, removing blank lines
@@ -83,7 +81,7 @@ let parsePeople: Morphs.Parse<Models.People> =
             name: name,
             traits: traits.split(/\s*,\s*/g)
         }
-        res[name] = p
+        res.set(name, p)
     }
 
     return res
@@ -102,8 +100,8 @@ let parsePeople: Morphs.Parse<Models.People> =
  * @returns {Models.FileContents}
  */
 export
-let addTrait: Morphs.Transform<Models.FileContents> =
-(trait: Morphs.TData, content: Models.FileContents): Models.FileContents => {
+let addTrait: Base.Transform<Models.FileContents> =
+(trait: Base.TData, content: Models.FileContents): Models.FileContents => {
     if (trait.secondary != undefined && trait.secondary.length > 1) {
         // slice off all others
         trait.secondary = trait.secondary.slice(0,0)
@@ -124,32 +122,31 @@ let addTrait: Morphs.Transform<Models.FileContents> =
  * @returns {Models.FileContents}
  */
 export
-let addTraits: Morphs.Transform<Models.FileContents> =
-(traits: Morphs.TData, content: Models.FileContents, count: number): Models.FileContents => {
+let addTraits: Base.Transform<Models.FileContents> =
+(traits: Base.TData, content: Models.FileContents, count: number): Models.FileContents => {
     // check if traits specifies anything in `secondary`
     //  if anything is specifed, this implies that the dev knows what they want to attach the `text` to
     //  alternatively, if `startIndex` is specified, start adding `primary` at `startIndex` for the next `count` people
     //      this will wrap around to the first person and continues if the last person is reached and `count`
     //      has not been reached
     //  otherwise, if nothing is specified, then select the first `count` people
-    let newContent: Models.FileContents = clonedeep(content)
+    let newContent: Models.FileContents = content.clone()
 
     // guarantee that count is not larger than the total number of people
-    count = Math.min(count, Object.keys(newContent.people).length)
+    count = Math.min(count, newContent.people.getLength())
 
     if (traits.secondary != undefined && traits.secondary.length >= count) {
-        for (let name in traits.secondary) {
-            // find the person in `newContent.people`
-            let person = findPerson(newContent.people, name)
+        for (let name of traits.secondary) {
+            let isUpdated = newContent
+            	.people
+            	.findAndUpdate(
+                    // find the person in `newContent.people`
+                    p => p.name === name,
+                    // add the trait to the person
+            		p => Helpers.insertTraits(p, traits.primary)
+                )
             // throw an error if they're not found
-            if (typeof person === 'boolean') {
-                throw 'Person not found'
-            }
-            // add the trait to the person
-            person = insertTraits(person, traits.primary)
-
-            let index = getIndex(newContent.people, person.name)
-            newContent.people[index] = person
+            if (!isUpdated) throw 'Person not found'
         }
     }
     else if (traits.startIndex != (null || undefined)) {
@@ -165,58 +162,35 @@ let addTraits: Morphs.Transform<Models.FileContents> =
                 current = 0
             }
             newContent.people[current] =
-                insertTraits(newContent.people[current], traits.primary)
+                Helpers.insertTraits(newContent.people[current], traits.primary)
         }
     }
     else {
+        let n = count
         // modify a total of count people
-        for (let i = 0; i < count; ++i) {
-            let name = Object.keys(newContent.people)[i]
-            newContent.people[name] =
-                insertTraits(newContent.people[name], traits.primary)
-        }
+        newContent.people = newContent.people
+        	.mapInplace((person) => {
+                // add traits to the first n people
+                if (0 < n--) {
+                    return Helpers.insertTraits(person, traits.primary)
+                }
+            })
     }
 
     return newContent
 }
 
 export
-let addPerson: Morphs.Transform<Models.FileContents>
+let addPerson: Base.Transform<Models.FileContents>
 export
-let addPeople: Morphs.Transform<Models.FileContents>
+let addPeople: Base.Transform<Models.FileContents>
 
 // Removing
 export
-let rmTrait: Morphs.Transform<Models.FileContents>
+let rmTrait: Base.Transform<Models.FileContents>
 export
-let rmTraits: Morphs.Transform<Models.FileContents>
+let rmTraits: Base.Transform<Models.FileContents>
 export
-let rmPerson: Morphs.Transform<Models.FileContents>
+let rmPerson: Base.Transform<Models.FileContents>
 export
-let rmPeople: Morphs.Transform<Models.FileContents>
-
-// helper functions
-
-function findPerson(obj: Models.People, index: string): MorphPerson | boolean {
-    for (let i = 0; i < obj.getLength(); ++i) {
-        let a = obj[i]
-        if (a.name == index) {
-            return a
-        }
-        return false
-    }
-}
-
-function getIndex(obj: Models.People, name: string): number {
-    let i: number
-    for (let name in obj) {
-        if (obj[name].name == name) return i
-    }
-}
-
-function insertTraits(person: Models.Person, traits: string[]): Models.Person {
-    for (let trait in traits) {
-        person.traits.push(traits[trait])
-    }
-    return person
-}
+let rmPeople: Base.Transform<Models.FileContents>

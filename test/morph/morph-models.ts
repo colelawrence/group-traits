@@ -1,3 +1,4 @@
+const clonedeep = require('lodash.clonedeep')
 import { TestOptions } from '../TestWorld'
 
 /**
@@ -28,29 +29,66 @@ interface Persons {
     [name: string]: Person
 }
 
+import { Dictionary } from './shared/dictionary'
+
 /**
  * @class Simiple class to store populations of people.
  */
 export
-class People {
-    /**
-     * @property {Persons} Implementation of <<Persons>> for actual storage.
-     */
-    people: Persons
-    private length: number
+class People extends Dictionary<Person> {
+	// Update each person
+    // if void/null returned, then the person will be deleted
+    mapInplace(updateFn: (value: Person, key: number | string) => Person | null) {
+        this.key_values()
+            .map(([k, v]) => <[string, Person]> [k, updateFn(v, k)])
+            .forEach(([k, v]) => {
+                if (v == null) this.delete(k)
+                else this.set(k, v)
+            })
+        return this
+    }
 
-    getLength(): number {
-        this.length = Object.keys(this.people).length
-        return this.length
+	clone() {
+        const clone = new People()
+        clone.table = clonedeep(this.table)
+        return clone
+    }
+
+    toTestCaseString(): string {
+        return this.values()
+        	.map(p => `${p.name}: ${p.traits.join(', ')}`)
+            .join('\n')
     }
 }
 
-export
-interface FileContents {
-    description?: string
-    options?: TestOptions
-    people?: People
+interface IFileContents {
+    description?: string,
+    options?: TestOptions,
+    people?: People,
     expected?: string
+}
+
+export
+class FileContents implements IFileContents {
+    description: string = ''
+    options: TestOptions = {groupMin: 0, groupMax: Infinity}
+    people: People = new People()
+    expected: string = ''
+
+	constructor(opts: IFileContents){
+        for (let key in opts) {
+			this[key] = opts[key]
+        }
+    }
+
+    clone(): FileContents {
+        return new FileContents({
+            description: clonedeep(this.description),
+            expected: clonedeep(this.expected),
+            options: clonedeep(this.options),
+            people: this.people.clone(),
+        })
+    }
 }
 
 export
