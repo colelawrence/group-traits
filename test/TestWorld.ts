@@ -120,6 +120,7 @@ export class TestWorld {
             .map(ln => ln.trim())
             .filter(ln => ln.length > 0)
             .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
+            .map(ifNullThrow("Incorrect syntax for people section of test case."))
             .map(([,name,traits]) => {
                     return { name, traits: traits.split(/\s*,\s*/g) }
                 })
@@ -133,6 +134,7 @@ export class TestWorld {
             .map(ln => ln.trim())
             .filter(ln => ln.length > 0)
             .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
+            .map(ifNullThrow("Incorrect syntax for group results section of test case."))
             .map(([,trait, people]) => {
                     return { trait, people: people.split(/\s*,\s*/g) }
                 })
@@ -165,4 +167,11 @@ function printTestCase(testcase: TestCase) {
             .map(gr => gr.toShortString())
             .map(indent(3))
             .join('\n'))
+}
+
+function ifNullThrow(errorMessage: string) {
+	return (element) => {
+        if (element == null) throw new Error(errorMessage)
+        return element
+    }
 }
