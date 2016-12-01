@@ -166,6 +166,7 @@ function (traits: Base.TData, content: Models.FileContents, count: number): Mode
                 if (startIndex <= i && endIndex > i) {
                     return Helpers.insertTraits(person, traits.primary)
                 }
+                i += 1
             })
     }
 
