@@ -6,7 +6,7 @@ import { GroupResult } from '../src/group-result'
 
 import { TestWorld, TestCase, printTestCase } from './TestWorld'
 
-import * as Helpers from './Helpers'
+import * as Helpers from './helpers'
 import { readdirSync, readFileSync } from 'fs'
 import * as M2 from './morph-2'
 
