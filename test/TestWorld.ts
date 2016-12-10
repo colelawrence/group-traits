@@ -48,18 +48,6 @@ export class TestWorld {
         return this.testcase
     }
 
-    static addTestCaseFromFile(filepath: string)
-    : TestCase {
-        return this.fromFile(filepath).getTestCase()
-    }
-
-    static fromFile(filepath: string)
-    : TestWorld {
-        const fileContents = readFileSync(filepath, 'utf8')
-        let tw = this.fromString(fileContents)
-        return tw
-    }
-
     static fromString(contents)
     : TestWorld {
         const tw = new TestWorld()

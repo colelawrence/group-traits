@@ -4,8 +4,10 @@
   "description": "Group objects by traits",
   "scripts": {
     "test": "mocha ./test/*Test.ts --require ts-node/register",
+    "unittests": "mocha ./test/**/*.spec.ts --require ts-node/register",
+    "unittests:watch": "nodemon -e ts,md -w src -w test -x \"npm run unittests --silent\"",
     "build": "tsc",
-    "test:watch": "nodemon -e ts,md -w src -w test -x \"npm run test --silent\""
+    "test:watch": "nodemon -e ts,md -w src -w test --ignore test/morphed_cases -x \"npm run test --silent\""
   },
   "author": "Cole Lawrence",
   "license": "ISC",

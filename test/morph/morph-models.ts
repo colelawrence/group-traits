@@ -22,13 +22,6 @@ class Person {
     public traits: string[]
 }
 
-/**
- * @interface A custom array-like interface to store a list of <<Person>> objects.
- */
-interface Persons {
-    [name: string]: Person
-}
-
 import { Dictionary } from './shared/dictionary'
 
 /**
@@ -53,54 +46,4 @@ class People extends Dictionary<Person> {
         clone.table = clonedeep(this.table)
         return clone
     }
-
-    toTestCaseString(): string {
-        return this.values()
-        	.map(p => `${p.name}: ${p.traits.join(', ')}`)
-            .join('\n')
-    }
-}
-
-interface IFileContents {
-    description?: string,
-    options?: TestOptions,
-    people?: People,
-    expected?: string
-}
-
-export
-class FileContents implements IFileContents {
-    description: string = ''
-    options: TestOptions = {groupMin: 0, groupMax: Infinity}
-    people: People = new People()
-    expected: string = ''
-
-	constructor(opts: IFileContents){
-        for (let key in opts) {
-			this[key] = opts[key]
-        }
-    }
-
-    clone(): FileContents {
-        return new FileContents({
-            description: clonedeep(this.description),
-            expected: this.expected,
-            options: clonedeep(this.options),
-            people: this.people.clone(),
-        })
-    }
-}
-
-export
-interface File {
-    filename: string
-    rawcontents: string
-    parsedcontents?: FileContents
-    usedtraits?: TraitCount
-}
-
-export
-interface Folder {
-    name: string
-    subcases?: { [filename: string]: File }
 }
