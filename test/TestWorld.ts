@@ -48,18 +48,6 @@ export class TestWorld {
         return this.testcase
     }
 
-    static addTestCaseFromFile(filepath: string)
-    : TestCase {
-        return this.fromFile(filepath).getTestCase()
-    }
-
-    static fromFile(filepath: string)
-    : TestWorld {
-        const fileContents = readFileSync(filepath, 'utf8')
-        let tw = this.fromString(fileContents)
-        return tw
-    }
-
     static fromString(contents)
     : TestWorld {
         const tw = new TestWorld()
@@ -98,7 +86,8 @@ export class TestWorld {
 	// Parse test case and populate world
     private parseTestCase(contents: string) {
         contents
-            .split(/\s*\r?\n======+\r?\n\s*/g)
+        	.replace(/\r/g, '') // Remove carriage returns for Windows based
+            .split(/\n======+\n/g)
             .slice(1) // Remove descriptions
             .forEach((content, index) => {
                 if (index === 0) this.parseOptions(content)
@@ -116,9 +105,11 @@ export class TestWorld {
     private parsePeople(contents: string)
     : Person[] {
         return contents
-            .split(/\s*\r?\n\s*/g)
+            .split(/\s*\n\s*/g)
+            .map(ln => ln.trim())
             .filter(ln => ln.length > 0)
-            .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
+            .map((ln) => [/^([^:]+):\s*(.+)$/.exec(ln), ln])
+            .map(ifNullThrow("Incorrect syntax for people section of test case."))
             .map(([,name,traits]) => {
                     return { name, traits: traits.split(/\s*,\s*/g) }
                 })
@@ -128,9 +119,11 @@ export class TestWorld {
     private parseGroupResults(contents: string)
     : GroupResult[] {
         const groupResults = contents
-            .split(/\s*\r?\n\s*/g)
+            .split(/\s*\n\s*/g)
+            .map(ln => ln.trim())
             .filter(ln => ln.length > 0)
-            .map((ln) => /^([^:]+):\s*(.+)$/.exec(ln))
+            .map((ln) => [/^([^:]+):\s*(.+)$/.exec(ln), ln])
+            .map(ifNullThrow("Incorrect syntax for group results section of test case."))
             .map(([,trait, people]) => {
                     return { trait, people: people.split(/\s*,\s*/g) }
                 })
@@ -163,4 +156,11 @@ function printTestCase(testcase: TestCase) {
             .map(gr => gr.toShortString())
             .map(indent(3))
             .join('\n'))
+}
+
+function ifNullThrow(errorMessage: string) {
+	return ([element, original]) => {
+        if (element == null) throw new Error(errorMessage + '\nLine: ' + original)
+        return element
+    }
 }

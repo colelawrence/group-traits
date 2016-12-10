@@ -36,3 +36,17 @@ ${differentGroups
     
     return null
 }
+
+import fs = require('fs')
+import path = require('path')
+
+export
+function deleteFiles (directory, pattern = /./i) {
+	fs.readdirSync(directory)
+    .forEach(filename => {
+        const filepath = path.resolve(directory, filename)
+        if (pattern.test(filepath)) {
+            fs.unlinkSync(filepath)
+        }
+    })
+}
