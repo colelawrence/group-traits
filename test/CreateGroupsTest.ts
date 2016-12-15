@@ -24,37 +24,43 @@ describe('createGroups', () => {
     const casesdir = './test/cases/'
     const morphed_casesdir = './test/morphed_cases/'
 
-	const cases: testcases
+	const ORIGINAL_CASES: testcases
 	= readCasesFromDirectory(casesdir)
 
-    // TODO Generate morphed test case files here
-    const tco_testcases = cases
-    	.map(tc1 => {
-            return {
-                object: TCO.fromString(tc1.contents),
-                filename: tc1.filename
-            }
-        })
-	
     Helpers.deleteFiles(morphed_casesdir, /\.md$/i)
-	// M2.writeMorphTestCases(tco_testcases, morphed_casesdir)
-    tco_testcases.forEach((tc) => {
-        M2T.morphTestCase(tc.filename)
-    })
+
+    // Write Morphed test cases
+    const morphs_to_write
+        : { filename: string, object: TCO.TestCaseObject }[]
+        = ORIGINAL_CASES
+        // create morphed test case objects with each case
+        .map(tc => 
+            M2T.TRANSFORMERS.map(tfmr => {
+                return {
+                    filename: `${tfmr.name}-${tc.filename}`,
+                    object: tfmr.fn(TCO.fromString(tc.contents))
+                }
+            })
+        )
+        .reduce((prev, curr) => prev.concat(curr), [])
+
+    // Write all test cases
+    M2.writeMorphTestCases(morphs_to_write, morphed_casesdir)
 
     // then use 1 single testing loop below to parse them all.
 
     // read in created test cases
-    const morphed_cases: testcases
-	= readCasesFromDirectory(morphed_casesdir)
+    const MORPHED_CASES
+        : testcases
+        = readCasesFromDirectory(morphed_casesdir)
 
 
     describe('Base test cases', () => {
-        cases.forEach(testTestCase)
+        ORIGINAL_CASES.forEach(testTestCase)
     })
 
     describe('Morphed test cases', () => {
-        morphed_cases.forEach(testTestCase)
+        MORPHED_CASES.forEach(testTestCase)
     })
 })
 
