@@ -9,6 +9,7 @@ import { TestWorld, TestCase, printTestCase } from './TestWorld'
 import * as Helpers from './helpers'
 import { readdirSync, readFileSync } from 'fs'
 import * as M2 from './morph-2'
+import * as M2T from './morph-2/transformers'
 
 import * as Morphs from './morph'
 import * as TCO from './morph-2/TestCaseObject'
@@ -36,7 +37,10 @@ describe('createGroups', () => {
         })
 	
     Helpers.deleteFiles(morphed_casesdir, /\.md$/i)
-	M2.writeMorphTestCases(tco_testcases, morphed_casesdir)
+	// M2.writeMorphTestCases(tco_testcases, morphed_casesdir)
+    tco_testcases.forEach((tc) => {
+        M2T.morphTestCase(tc.filename)
+    })
 
     // then use 1 single testing loop below to parse them all.
 
